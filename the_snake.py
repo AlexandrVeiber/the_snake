@@ -1,6 +1,6 @@
-from random import randint
-import pygame
 import os
+import pygame
+from random import randint  # Удалим неиспользуемые импорты
 
 # Константы для размеров поля и сетки:
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
@@ -53,23 +53,11 @@ def display_score(score):
     screen.blit(score_surface, (10, 10))  # Отображение в верхнем левом углу
 
 
-class GameObject:
-    """Базовый класс для игровых объектов."""
-    
-    def __init__(self, position=(0, 0)):
-        self.position = position
-        self.body_color = (0, 0, 0)  # Цвет по умолчанию
-
-    def draw(self):
-        """Метод для отрисовки объекта на экране. Должен быть переопределен в дочерних классах."""
-        pass
-
-
-class Apple(GameObject):
+class Apple:
     """Класс, описывающий яблоко."""
-    
+
     def __init__(self):
-        super().__init__(self.randomize_position())
+        self.position = self.randomize_position()
         self.body_color = APPLE_COLOR
 
     def randomize_position(self):
@@ -85,12 +73,11 @@ class Apple(GameObject):
         pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
 
 
-class Snake(GameObject):
+class Snake:
     """Класс, описывающий змейку."""
-    
+
     def __init__(self):
-        initial_position = ((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))
-        super().__init__(initial_position)
+        initial_position = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
         self.length = 1
         self.positions = [initial_position]
         self.direction = RIGHT
@@ -108,7 +95,8 @@ class Snake(GameObject):
         """Обновляет позицию змейки."""
         head_x, head_y = self.get_head_position()
         dx, dy = self.direction
-        new_head = ((head_x + dx * GRID_SIZE) % SCREEN_WIDTH, (head_y + dy * GRID_SIZE) % SCREEN_HEIGHT)
+        new_head = ((head_x + dx * GRID_SIZE) % SCREEN_WIDTH,
+                    (head_y + dy * GRID_SIZE) % SCREEN_HEIGHT)
 
         # Проверка на столкновение с собой
         if new_head in self.positions[1:]:
@@ -128,7 +116,7 @@ class Snake(GameObject):
     def reset(self):
         """Сбрасывает змейку в начальное состояние."""
         self.length = 1
-        self.positions = [((SCREEN_WIDTH // 2), (SCREEN_HEIGHT // 2))]
+        self.positions = [(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)]
         self.direction = RIGHT
         self.last = None
 
@@ -150,16 +138,14 @@ class Snake(GameObject):
             pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
 
 
-def handle_keys(snake, high_score):
+def handle_keys(snake, events):
     """Обрабатывает нажатия клавиш для управления змейкой."""
-    for event in pygame.event.get():
+    for event in events:
         if event.type == pygame.QUIT:
-            save_high_score(high_score)  # Сохраняем рекорд перед выходом
             pygame.quit()
             raise SystemExit
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:  # Проверка нажатия ESC
-                save_high_score(high_score)  # Сохраняем рекорд перед выходом
+            if event.key == pygame.K_ESCAPE:
                 pygame.quit()
                 raise SystemExit
             elif event.key == pygame.K_UP and snake.direction != DOWN:
@@ -170,7 +156,6 @@ def handle_keys(snake, high_score):
                 snake.next_direction = LEFT
             elif event.key == pygame.K_RIGHT and snake.direction != LEFT:
                 snake.next_direction = RIGHT
-    
 
 
 def main():
@@ -184,7 +169,12 @@ def main():
 
     while True:
         clock.tick(SPEED)
-        handle_keys(snake, high_score)  # Передаем high_score в функцию
+
+        # Получаем все события
+        events = pygame.event.get()
+
+        # Обрабатываем события
+        handle_keys(snake, events)
         snake.update_direction()
         snake.move()
 
@@ -194,21 +184,22 @@ def main():
             apple = Apple()  # Перемещение яблока на новую позицию
 
             # Обновление рекорда
-            if snake.length - 1 > high_score:  # Учитываем, что длина включает начальный сегмент
+            if snake.length - 1 > high_score:
                 high_score = snake.length - 1  # Обновляем рекорд
+
         # Отрисовка объектов
         screen.fill(BOARD_BACKGROUND_COLOR)
         snake.draw()
         apple.draw()
 
         # Отображение текущего счета
-        display_score(snake.length - 1)  # Учитываем, что длина змейки включает начальный сегмент
+        display_score(snake.length - 1)
 
         # Обновление заголовка окна с рекордом
         pygame.display.set_caption(f'Змейка - Рекорд: {high_score}')
 
         pygame.display.update()
-  
-    
+
+
 if __name__ == '__main__':
     main()
